@@ -10,15 +10,12 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
-    # Указываем, что все команды выполняются внутри папки android-apk
-    defaults:
-      run:
-        working-directory: ./android-apk
-
     steps:
+    # 1. Скачиваем репозиторий (всегда выполняется в корне)
     - name: Checkout code
       uses: actions/checkout@v4
 
+    # 2. Устанавливаем Java и кэшируем зависимости
     - name: set up JDK 17
       uses: actions/setup-java@v4
       with:
@@ -26,14 +23,19 @@ jobs:
         distribution: 'zulu'
         cache: gradle
 
+    # 3. Выдаем права на запуск (указываем точный путь к файлу)
     - name: Grant execute permission for gradlew
-      run: chmod +x gradlew
+      run: chmod +x ./android-apk/gradlew
 
+    # 4. Запускаем сборку прямо внутри подпапки проекта
     - name: Build with Gradle
+      working-directory: ./android-apk
       run: ./gradlew assembleDebug
 
+    # 5. Вытаскиваем и сохраняем APK (ищем рекурсивно по всему репозиторию)
     - name: Upload APK Artifact
       uses: actions/upload-artifact@v4
       with:
         name: app-debug
-        path: "**/build/outputs/apk/debug/*.apk"
+        path: |
+          **/build/outputs/apk/debug/*.apk
